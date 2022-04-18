@@ -1,14 +1,14 @@
 import express from "express";
 import { graphqlHTTP } from "express-graphql";
 import passport from "passport";
-import DataLoader from "dataloader";
 
 import { authSchema } from "./schema.js";
 import { BasicStrategy } from "passport-http";
 import { findUser } from "./db/users.js";
+import { tempDB } from "./db/tasks.js";
 
 const loggingMiddleware = (req, _, next) => {
-	console.log("ip:", req.ip);
+	//console.log("ip:", req.ip);
 	next();
 };
 

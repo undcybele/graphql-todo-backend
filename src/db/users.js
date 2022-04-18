@@ -10,14 +10,27 @@ export class User {
 }
 
 export let userDB = [
-	{ id: 0, username: "User A", password: "Pass1", roles: [Roles.User] },
+	{
+		id: 0,
+		username: "User A",
+		password: "Pass1",
+		roles: [Roles.User],
+		tasks: [0, 2],
+	},
 	{
 		id: 1,
 		username: "User B",
 		password: "Pass2",
 		roles: [Roles.User, Roles.Admin],
+		tasks: [1],
 	},
-	{ id: 2, username: "User C", password: "Pass3", roles: [Roles.User] },
+	{
+		id: 2,
+		username: "User C",
+		password: "Pass3",
+		roles: [Roles.User],
+		tasks: [3],
+	},
 ];
 
 export function findUser(username, password) {

@@ -1,5 +1,7 @@
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { authDirectiveTransformer, authDirectiveTypeDefs } from "./auth.js";
+import DataLoader from "dataloader";
+
 import { userDB, User } from "./db/users.js";
 import { tempDB, Task } from "./db/tasks.js";
 
@@ -7,10 +9,11 @@ let id_count = tempDB.length - 1;
 
 const typeDefs = `
   type User @auth(requires: ADMIN) {
-    id: ID
-    username: String
-    password: String
-    role: [Role]
+    id: ID!
+    username: String!
+    password: String!
+    role: [Role]!
+    tasks: [Task]!
   }
 
   type Task {
@@ -19,14 +22,15 @@ const typeDefs = `
     isDone: Boolean!
     owner: ID!
   }
+  
+  input TaskInput {
+    text: String!
+  }
 
   type Query {
     getTaskById(id: ID!): Task 
     getAllTasks: [Task] @auth(requires: ADMIN)
-  }
-
-  input TaskInput {
-    text: String!
+    getUserById(id: ID!): User
   }
 
   type Mutation {
@@ -35,6 +39,18 @@ const typeDefs = `
   }
 `;
 
+const batchGetTodosById = async (ids) => {
+	const results = ids
+		.map((id) => tempDB[id])
+		.reduce((acc, value) => {
+			acc[value.id] = value;
+			return acc;
+		}, {});
+	return ids.map((id) => results[id] || new Error(`No results for ${id}`));
+};
+
+const taskLoader = new DataLoader(batchGetTodosById);
+
 const resolvers = {
 	Query: {
 		getAllTasks: () => {
@@ -42,6 +58,14 @@ const resolvers = {
 				throw new Error("No tasks available. Create a new one!");
 			}
 			return tempDB;
+		},
+		getUserById: (parent, args, context) => {
+			return userDB.find((user) => user.id == args.id);
+		},
+	},
+	User: {
+		tasks: async (parent, args, context) => {
+			return await taskLoader.loadMany(parent.tasks);
 		},
 	},
 	Mutation: {
